@@ -1,16 +1,15 @@
-import { Client, GatewayIntentBits, Events } from 'discord.js'
+import { Client, GatewayIntentBits } from 'discord.js'
+import events from './events'
+import commands from '@/discord/commands'
 import logger from '@/logger'
 
 const log = logger('Discord')
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildMessages, GatewayIntentBits.DirectMessages] })
 
-client.once(Events.ClientReady, () => {
-    log.info(`Ready... (${client.user?.tag}})`)
-})
+events.forEach(event => client.on(event.type, (...args) => event.execute(client, ...args as any)))
 
-client.on(Events.InteractionCreate, async (interaction) => {
-    
-})
+client.commands = new Map()
+commands.forEach(command => client.commands.set(command.name, command))
 
 export function initialize() {
     if (!process.env.TOKEN) {
