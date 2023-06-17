@@ -1,6 +1,6 @@
 import { ApplicationCommandOptionType } from 'discord.js'
 import BaseCommand from '../builder/command'
-import { userStates, UserState } from '../stateManager'
+import { userStates, UserState } from '../manager/state'
 import * as database from '@/database'
 import * as utils from '@/utils'
 
@@ -13,7 +13,7 @@ export default new BaseCommand({
         type: ApplicationCommandOptionType.User,
         required: false
     }, {
-        name: 'onlyThisServer',
+        name: 'only_this_server',
         description: 'このサーバーでの通話履歴の統計を表示します',
         type: ApplicationCommandOptionType.Boolean,
         required: false
@@ -34,15 +34,16 @@ export default new BaseCommand({
             userHistorys.push({
                 user: targetUser.id,
                 server: userState.serverId,
+                channel: userState.channelId,
                 unix: Date.now(),
                 time: Date.now() - userState.joinTime
             })
         }
 
-        const onlyThisServer = interaction.inGuild() ? interaction.options.getBoolean('onlyThisServer') ?? false : false
+        const onlyThisServer = interaction.inGuild() ? interaction.options.getBoolean('only_this_server') ?? false : false
         const statistics = utils.calcurateStatistics(userHistorys, onlyThisServer ? interaction.guild!.id : undefined)
 
-        // VCに参加したことがなければ終了
+        // VCに通話したことがなければ終了
         if (!statistics.vcJoinCount) {
             return interaction.reply(`${targetUser.username} さんの通話履歴が見つかりませんでした。\n3分以上VCをすることで記録を見ることができるようになります。`)
         }
@@ -50,7 +51,7 @@ export default new BaseCommand({
         interaction.reply({
             embeds: [{
                 color: targetUser.accentColor ?? undefined,
-                timestamp: Date.now().toString(),
+                timestamp: new Date().toISOString(),
                 footer: {
                     text: `記録開始日: ${statistics.firstJoinDate}`
                 },
@@ -59,15 +60,16 @@ export default new BaseCommand({
                     icon_url: targetUser.displayAvatarURL()
                 },
                 description: `
-                    > :speaker: **参加時間**
-                    今日の参加時間: **${statistics.today}**
-                    過去一週間の合計参加時間: **${statistics.weekly}**
-                    過去一ヶ月間の合計参加時間: **${statistics.monthly}**
-                    これまでの累計参加時間: **${statistics.total}**
-
-                    > :trophy: **実績**
+                    ### :speaker: 通話時間
+                    今日の通話時間: **${statistics.today}**
+                    過去一週間の合計通話時間: **${statistics.weekly}**
+                    過去一ヶ月間の合計通話時間: **${statistics.monthly}**
+                    ### :bar_chart: 統計
+                    累計通話時間: **${statistics.total}**
+                    平均通話時間: **${statistics.average}**
+                    ### :trophy: 実績
                     最長記録: **${statistics.longest} (${statistics.longestTimeDate})**
-                    参加した回数: **${statistics.vcJoinCount}回**
+                    通話した回数: **${statistics.vcJoinCount}回**
                 `.replace(/    /g, '')
             }]
         })
