@@ -63,7 +63,8 @@ export function calcurateStatistics(userHistorys: UserHistoryRecord[], serverId?
         total: getTime(statistics.total, false, true),
         longest: getTime(statistics.longest),
         longestTimeDate: moment(statistics.longestTimeDate).format('YYYY/MM/DD'),
-        vcJoinCount: statistics.vcJoinCount
+        vcJoinCount: statistics.vcJoinCount,
+        average: getTime(statistics.total / statistics.vcJoinCount)
     }
 }
 
