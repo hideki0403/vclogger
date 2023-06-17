@@ -4,7 +4,7 @@ import * as database from '@/database'
 import * as utils from '@/utils'
 
 export default new BaseCommand({
-    name: 'show',
+    name: 'stats',
     description: '全ユーザーの通話の統計を表示します',
     options: [{
         name: 'only_this_server',
@@ -38,7 +38,6 @@ export default new BaseCommand({
                     今日の通話時間: **${statistics.today}**
                     過去一週間の合計通話時間: **${statistics.weekly}**
                     過去一ヶ月間の合計通話時間: **${statistics.monthly}**
-
                     ### :bar_chart: 統計
                     累計通話時間: **${statistics.total}**
                     平均通話時間: **${statistics.average}**
