@@ -130,8 +130,8 @@ dist
 .pnp.*
 
 # SQLite
-.sqlite
-.sqlite3
+*.sqlite
+*.sqlite3
 
 # Log
 logs
