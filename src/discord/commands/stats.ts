@@ -15,12 +15,14 @@ export default new BaseCommand({
     execute: async (interaction) => {
         const globalHistory = database.getGlobalHistory()
         const onlyThisServer = interaction.inGuild() ? interaction.options.getBoolean('only_this_server') ?? false : false
-        const statistics = utils.calcurateStatistics(globalHistory, onlyThisServer ? interaction.guild!.id : undefined)
+        const statistics = utils.calcurateStatistics(globalHistory, undefined, onlyThisServer ? interaction.guild!.id : undefined)
 
         // VCに通話したことがなければ終了
         if (!statistics.vcJoinCount) {
             return interaction.reply(`通話履歴がありませんでした`)
         }
+
+        const userCount = Array.from(new Set(globalHistory.map(x => x.user))).length
 
         interaction.reply({
             embeds: [{
@@ -43,6 +45,7 @@ export default new BaseCommand({
                     平均通話時間: **${statistics.average}**
                     最長記録: **${statistics.longest} (${statistics.longestTimeDate})**
                     全ユーザーの通話した回数: **${statistics.vcJoinCount}回**
+                    記録されているユーザー数: **${userCount}人**
                 `.replace(/    /g, '')
             }]
         })
