@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType } from 'discord.js'
+import { ApplicationCommandOptionType, AttachmentBuilder } from 'discord.js'
 import BaseCommand from '../builder/command'
 import { userStates, UserState } from '../manager/state'
 import * as database from '@/database'
@@ -41,12 +41,17 @@ export default new BaseCommand({
         }
 
         const onlyThisServer = interaction.inGuild() ? interaction.options.getBoolean('only_this_server') ?? false : false
-        const statistics = utils.calcurateStatistics(userHistorys, onlyThisServer ? interaction.guild!.id : undefined)
+        const statistics = utils.calcurateStatistics(userHistorys, 'month', onlyThisServer ? interaction.guild!.id : undefined)
 
         // VCに通話したことがなければ終了
         if (!statistics.vcJoinCount) {
             return interaction.reply(`${targetUser.username} さんの通話履歴が見つかりませんでした。\n3分以上VCをすることで記録を見ることができるようになります。`)
         }
+
+        // グラフを生成
+        const attachment = new AttachmentBuilder(await utils.renderChart(statistics.chartData!), {
+            name: 'chart.png'
+        })
 
         interaction.reply({
             embeds: [{
@@ -70,8 +75,12 @@ export default new BaseCommand({
                     ### :trophy: 実績
                     最長記録: **${statistics.longest} (${statistics.longestTimeDate})**
                     通話した回数: **${statistics.vcJoinCount}回**
-                `.replace(/    /g, '')
-            }]
+                `.replace(/    /g, ''),
+                image: {
+                    url: 'attachment://chart.png'
+                }
+            }],
+            files: [attachment]
         })
     }
 })
