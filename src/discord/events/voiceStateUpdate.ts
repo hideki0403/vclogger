@@ -73,7 +73,7 @@ export default new BaseEvent<'voiceStateUpdate'>({
 
                 // 参加時間が3分以上だった場合にDBにレコード突っ込む
                 if ((nowTime - userState!.joinTime) > 3 * 60 * 1000) {
-                    database.insertHistory(oldState.id, userState!.serverId, userState!.channelId, userState!.joinTime, nowTime)
+                    database.insertHistory(oldState.id, userState!.serverId, userState!.channelId, userState!.joinTime, nowTime - userState!.joinTime)
                 }
 
                 log.info(`UserLeft: ${newState.member!.user.username} (${moment().format('YYYY/MM/DD HH:mm:ss')})`)
