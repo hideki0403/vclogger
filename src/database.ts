@@ -17,9 +17,15 @@ export type SearchOptions = {
 }
 
 const overrideConditions = {
-    before: '<=',
-    after: '>=',
-} as Record<string, string>
+    before: {
+        column: 'unix',
+        condition: '<=',
+    },
+    after: {
+        column: 'unix',
+        condition: '>=',
+    },
+} as Record<string, Record<string, string> | undefined>
 
 export const db = sqlite3('database.sqlite3')
 
@@ -39,7 +45,8 @@ export function getHistory(options?: SearchOptions) {
         for (const [key, value] of Object.entries(options)) {
             if (key === undefined || value === undefined) continue
 
-            query.push(`${key} ${overrideConditions[key] ?? '='} ?`)
+            const cond = overrideConditions[key]
+            query.push(`${cond?.column ?? key} ${cond?.condition ?? '='} ?`)
             params.push(value)
         }
     }
