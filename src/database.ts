@@ -8,6 +8,19 @@ export type UserHistoryRecord = {
     time: number,
 }
 
+export type SearchOptions = {
+    user?: string,
+    server?: string,
+    channel?: string,
+    before?: number,
+    after?: number,
+}
+
+const overrideConditions = {
+    before: '<=',
+    after: '>=',
+} as Record<string, string>
+
 export const db = sqlite3('database.sqlite3')
 
 export function initialize() {
@@ -18,10 +31,21 @@ export function insertHistory(user: string, server: string, channel: string, uni
     db.prepare('INSERT INTO history VALUES (?, ?, ?, ?, ?)').run(user, server, channel, unix, time)
 }
 
-export function getUserHistory(user: string) {
-    return db.prepare('SELECT * FROM history WHERE user = ?').all(user) as UserHistoryRecord[]
-}
+export function getHistory(options?: SearchOptions) {
+    const query = []
+    const params = []
 
-export function getGlobalHistory() {
-    return db.prepare('SELECT * FROM history').all() as UserHistoryRecord[]
+    if (options) {
+        for (const [key, value] of Object.entries(options)) {
+            if (key === undefined || value === undefined) continue
+
+            query.push(`${key} ${overrideConditions[key] ?? '='} ?`)
+            params.push(value)
+        }
+    }
+
+    let sql = 'SELECT * FROM history'
+    if (query.length) sql += ` WHERE ${query.join(' AND ')}`
+
+    return db.prepare(sql).all(...params) as UserHistoryRecord[]
 }

@@ -13,9 +13,12 @@ export default new BaseCommand({
         required: false
     }],
     execute: async (interaction) => {
-        const globalHistory = database.getGlobalHistory()
         const onlyThisServer = interaction.inGuild() ? interaction.options.getBoolean('only_this_server') ?? false : false
-        const statistics = utils.calcurateStatistics(globalHistory, undefined, onlyThisServer ? interaction.guild!.id : undefined)
+        const globalHistory = database.getHistory({
+            server: onlyThisServer ? interaction.guild?.id : undefined
+        })
+        
+        const statistics = utils.calcurateStatistics(globalHistory)
 
         // VCに通話したことがなければ終了
         if (!statistics.vcJoinCount) {

@@ -35,19 +35,20 @@ export default new BaseCommand({
     execute: async (interaction) => {
         const targetUser = interaction.options.getUser('user') ?? interaction.user
         const range = interaction.options.getString('range') ?? 'month'
-
-        if (!['week', 'month', 'year'].includes(range)) {
-            return interaction.reply('rangeの値が不正です')
-        }
+        const onlyThisServer = interaction.inGuild() ? interaction.options.getBoolean('only_this_server') ?? false : false
 
         // アクセントカラーがなければ強制fetch
         if (!targetUser.accentColor) {
             await targetUser.fetch(true)
         }
 
-        const userHistorys = database.getUserHistory(targetUser.id)
-        const onlyThisServer = interaction.inGuild() ? interaction.options.getBoolean('only_this_server') ?? false : false
-        const statistics = utils.calcurateStatistics(userHistorys, range as any, onlyThisServer ? interaction.guild!.id : undefined)
+        const userHistorys = database.getHistory({
+            user: targetUser.id,
+            server: onlyThisServer ? interaction.guild?.id : undefined,
+            after: utils.getRangeDate(range as any)
+        })
+
+        const statistics = utils.calcurateStatistics(userHistorys, range as any)
 
         // VCに通話したことがなければ終了
         if (!statistics.vcJoinCount) {

@@ -5,6 +5,9 @@ import type { ChartConfiguration } from 'chart.js'
 import { UserHistoryRecord } from '@/database'
 import path from 'path'
 
+export type RangeUnit = 'week' | 'month' | 'year'
+export type TimeUnit = 'seconds' | 'minutes' | 'hours'
+
 type Statistics = {
     today: number
     weekly: number
@@ -15,13 +18,13 @@ type Statistics = {
     firstJoinDate: number
     vcJoinCount: number
     chartData: {
-        rangeUnit: 'week' | 'month' | 'year'
-        timeUnit: 'seconds' | 'minutes' | 'hours'
+        rangeUnit: RangeUnit
+        timeUnit: TimeUnit
         data: { [key: string]: number }
     } | null
 }
 
-export function calcurateStatistics(userHistorys: UserHistoryRecord[], rangeUnit?: 'week' | 'month' | 'year', serverId?: string) {
+export function calcurateStatistics(userHistorys: UserHistoryRecord[], rangeUnit?: RangeUnit) {
     const statistics: Statistics = {
         today: 0,
         weekly: 0,
@@ -38,12 +41,11 @@ export function calcurateStatistics(userHistorys: UserHistoryRecord[], rangeUnit
         } : null
     }
 
-    const rangeDays = rangeUnit === 'week' ? 7 : rangeUnit === 'month' ? 31 : 365
     const diffTarget = {
         today: moment().startOf('day').unix() * 1000,
         week: moment().startOf('day').subtract(7, 'days').unix() * 1000,
         month: moment().startOf('day').subtract(31, 'days').unix() * 1000,
-        range: moment().startOf('day').subtract(rangeDays, 'days').add(1, 'day').unix() * 1000
+        range: moment().startOf('day').subtract(getRangeDate(rangeUnit, true), 'days').add(1, 'day').unix() * 1000
     }
 
     // チャート用データの初期化
@@ -55,8 +57,6 @@ export function calcurateStatistics(userHistorys: UserHistoryRecord[], rangeUnit
     }
 
     for (const record of userHistorys) {
-        if (serverId && serverId !== record.server) continue
-
         // VC参加回数
         statistics.vcJoinCount++
 
@@ -162,6 +162,35 @@ export function parseMilliseconds(milliseconds: number) {
         minutes: roundTowardsZero(milliseconds / 60000) % 60,
         seconds: roundTowardsZero(milliseconds / 1000) % 60
     }
+}
+
+export function getRangeDate(rangeUnit: RangeUnit | undefined, rawUnit = false) {
+    let unit
+
+    switch (rangeUnit) {
+        case 'week': {
+            unit = 7
+            break
+        }
+        case 'month': {
+            unit = 31
+            break
+        }
+        case 'year': {
+            unit = 365
+            break
+        }
+        default: {
+            unit = 31
+            break
+        }
+    }
+
+    if (rawUnit) {
+        return unit
+    }
+
+    return moment().startOf('day').subtract(unit, 'days').unix() * 1000
 }
 
 export async function renderChart(chartData: NonNullable<Statistics['chartData']>) {

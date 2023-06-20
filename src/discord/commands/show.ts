@@ -20,17 +20,21 @@ export default new BaseCommand({
     }],
     execute: async (interaction) => {
         const targetUser = interaction.options.getUser('user') ?? interaction.user
+        const onlyThisServer = interaction.inGuild() ? interaction.options.getBoolean('only_this_server') ?? false : false
 
         // アクセントカラーがなければ強制fetch
         if (!targetUser.accentColor) {
             await targetUser.fetch(true)
         }
 
-        const userHistorys = database.getUserHistory(targetUser.id)
+        const userHistorys = database.getHistory({
+            user: targetUser.id,
+            server: onlyThisServer ? interaction.guild?.id : undefined,
+        })
 
         // 現在の通話状態を反映
         if (userStates.has(targetUser.id)) {
-            const userState = userStates.get(targetUser.id) as UserState
+            const userState = userStates.get(targetUser.id)!
             userHistorys.push({
                 user: targetUser.id,
                 server: userState.serverId,
@@ -40,8 +44,7 @@ export default new BaseCommand({
             })
         }
 
-        const onlyThisServer = interaction.inGuild() ? interaction.options.getBoolean('only_this_server') ?? false : false
-        const statistics = utils.calcurateStatistics(userHistorys, 'month', onlyThisServer ? interaction.guild!.id : undefined)
+        const statistics = utils.calcurateStatistics(userHistorys, 'month')
 
         // VCに通話したことがなければ終了
         if (!statistics.vcJoinCount) {
