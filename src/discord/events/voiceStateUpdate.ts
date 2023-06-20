@@ -92,6 +92,15 @@ export default new BaseEvent<'voiceStateUpdate'>({
             if (oldState.channel!.members.size === 0) {
                 // VCをしているサーバー内で進行しているVC数が残り1なら通話終了メッセージを送信
                 if (serverState!.channels.size === 1) {
+                    // 通話に参加した人数を取得
+                    const records = database.getHistory({
+                        server: guild.id,
+                        after: serverState!.globalStartTime,
+                    })
+
+                    const userCount = Array.from(new Set(records.map(x => x.user))).length
+
+                    // 通話終了メッセージを送信
                     guild.systemChannel!.send({
                         embeds: [{
                             color: 0xBF616A,
@@ -99,7 +108,12 @@ export default new BaseEvent<'voiceStateUpdate'>({
                             author: {
                                 name: '通話終了'
                             },
-                            description: `${oldState.channel!.name} (<#${oldState.channelId}>)での通話が終了しました。\n通話時間: **${utils.getTime(Date.now() - (serverState!.channels.get(oldState.channelId!) as number), true)}**`
+                            description: `
+                                ${oldState.channel!.name} (<#${oldState.channelId}>)での通話が終了しました。
+
+                                通話時間: **${utils.getTime(Date.now() - (serverState!.channels.get(oldState.channelId!) as number), true)}**
+                                参加人数: **${userCount}人**
+                            `.replace(/  +/g, '')
                         }]
                     })
                 }
