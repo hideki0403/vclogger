@@ -122,7 +122,7 @@ export default new BaseEvent<'voiceStateUpdate'>({
                 serverState!.channels.delete(oldState.channelId!)
 
                 // キャッシュされているチャンネル数が0ならserverManagerから削除
-                if (serverState!.channels.size) serverStates.delete(guild.id)
+                if (!serverState!.channels.size) serverStates.delete(guild.id)
             }
         }
 
