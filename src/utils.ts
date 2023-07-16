@@ -244,7 +244,6 @@ export async function renderChart(chartData: NonNullable<Statistics['chartData']
                     },
                 },
                 y: {
-                    beginAtZero: false,
                     ticks: {
                         color: '#D8DEE9'
                     },
