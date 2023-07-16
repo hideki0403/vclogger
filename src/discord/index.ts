@@ -4,7 +4,7 @@ import commands from '@/discord/commands'
 import logger from '@/logger'
 
 const log = logger('Discord')
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildMessages, GatewayIntentBits.DirectMessages] })
+export const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildMessages, GatewayIntentBits.DirectMessages] })
 
 events.forEach(event => client.on(event.type, (...args) => event.execute(client, ...args as any)))
 
