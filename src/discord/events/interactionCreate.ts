@@ -14,6 +14,10 @@ export default new BaseEvent<'interactionCreate'>({
             return interaction.reply({ embeds: [errorEmbed('コマンドが見つかりませんでした。\n時間を開けて再度お試しください。')] })
         }
 
+        if (command.permissions && !interaction.memberPermissions?.has(command.permissions)) {
+            return interaction.reply({ embeds: [errorEmbed('このコマンドを実行する権限がありません。')] })
+        }
+
         try {
             command.execute(interaction)
         } catch (error) {
