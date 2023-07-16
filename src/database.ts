@@ -1,4 +1,5 @@
 import sqlite3 from 'better-sqlite3'
+import type { UserState } from '@/discord/manager/state'
 
 export type UserHistoryRecord = {
     user: string,
@@ -33,8 +34,14 @@ export function initialize() {
     db.prepare('CREATE TABLE IF NOT EXISTS history(user TEXT, server TEXT, channel TEXT, unix INTEGER, time INTEGER)').run()
 }
 
-export function insertHistory(user: string, server: string, channel: string, unix: number, time: number) {
-    db.prepare('INSERT INTO history VALUES (?, ?, ?, ?, ?)').run(user, server, channel, unix, time)
+export function insertHistory(userId: string, state: UserState) {
+    const nowTime = Date.now()
+
+    // 参加時間が3分以下なら無視
+    if ((nowTime - state.joinTime) < 3 * 60 * 1000) return
+
+    // user: string, server: string, channel: string, unix: number, time: number
+    db.prepare('INSERT INTO history VALUES (?, ?, ?, ?, ?)').run(userId, state.serverId, state.channelId, state.joinTime, nowTime - state.joinTime)
 }
 
 export function getHistory(options?: SearchOptions) {
