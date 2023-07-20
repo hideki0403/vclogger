@@ -155,3 +155,11 @@ export async function resetStates(guild: Guild) {
 
     log.info(`Successfully reset states for ${guild.id}`)
 }
+
+export function saveStates() {
+    userStates.forEach((state, id) => {
+        database.insertHistory(id, state)
+    })
+
+    log.info('Successfully saved userStates')
+}

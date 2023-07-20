@@ -3,6 +3,7 @@ import dotenv from 'dotenv'
 import logger from '@/logger'
 import * as database from '@/database'
 import * as discord from '@/discord'
+import * as stateManager from '@/discord/manager/state'
 
 dotenv.config()
 database.initialize()
@@ -18,3 +19,7 @@ process.on('uncaughtException', (err: Error) => {
 process.on('unhandledRejection', (err: Error) => {
     log.warn(err.stack)
 })
+
+process.on('SIGINT', stateManager.saveStates)
+process.on('SIGTERM', stateManager.saveStates)
+process.on('SIGHUP', stateManager.saveStates)
