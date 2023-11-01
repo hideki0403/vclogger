@@ -22,6 +22,8 @@ export type ServerState = {
 export const userStates = new Map<string, UserState>()
 export const serverStates = new Map<string, ServerState>()
 
+const ANNOUNCE_DELAY = 15000
+
 export function joinVoiceChannel(state: VoiceState) {
     // botの場合は無視
     if (state.member?.user.bot) return
@@ -45,18 +47,25 @@ export function joinVoiceChannel(state: VoiceState) {
             channels: new Map(),
         })
 
-        guild.systemChannel!.send({
-            content: '@everyone',
-            embeds: [{
-                color: 0xA3BE8C,
-                timestamp: new Date().toISOString(),
-                author: {
-                    name: '通話開始',
-                    icon_url: state.member!.displayAvatarURL()
-                },
-                description: `${state.member!.displayName}さんが${state.channel!.name} (<#${state.channelId}>)で通話を開始しました。 `
-            }]
-        })
+        // 15秒後に通話開始メッセージを送信
+        setTimeout((targetGuild, voiceState) => {
+            const targetState = serverStates.get(targetGuild.id)
+
+            // もしそれまでに通話を終了していれば送信せず終わる
+            if (!targetState) return
+            targetGuild.systemChannel?.send({
+                content: '@everyone',
+                embeds: [{
+                    color: 0xA3BE8C,
+                    timestamp: new Date(targetState.globalStartTime).toISOString(),
+                    author: {
+                        name: '通話開始',
+                        icon_url: voiceState.member!.displayAvatarURL()
+                    },
+                    description: `${voiceState.member!.displayName}さんが${voiceState.channel!.name} (<#${voiceState.channelId}>)で通話を開始しました。 `
+                }]
+            })
+        }, ANNOUNCE_DELAY, guild, state)
     }
 
     // channelStateが登録されていなければ登録
@@ -98,38 +107,41 @@ export function leaveVoiceChannel(state: VoiceState) {
 
     const guild = state.guild
 
+    const serverState = serverStates.get(guild.id)
+
     // もしサーバーのデータが存在していなければ終了
-    if (!serverStates.has(guild.id)) return
+    if (!serverState) return
 
     // 参加していたVCに人が居なければserverManagerから削除
-    const serverState = serverStates.get(guild.id)
     if (state.channel!.members.size === 0) {
         // VCをしているサーバー内で進行しているVC数が残り1なら通話終了メッセージを送信
-        if (serverState!.channels.size === 1) {
+        if (serverState.channels.size === 1) {
             // 通話に参加した人数を取得
             const records = database.getHistory({
                 server: guild.id,
-                after: serverState!.globalStartTime,
+                after: serverState.globalStartTime,
             })
 
             const userCount = Array.from(new Set(records.map(x => x.user))).length
 
-            // 通話終了メッセージを送信
-            guild.systemChannel!.send({
-                embeds: [{
-                    color: 0xBF616A,
-                    timestamp: new Date().toISOString(),
-                    author: {
-                        name: '通話終了'
-                    },
-                    description: `
+            // 通話開始メッセージが送信されていれば通話終了メッセージを送信
+            if (Date.now() - serverState.globalStartTime > ANNOUNCE_DELAY) {
+                guild.systemChannel?.send({
+                    embeds: [{
+                        color: 0xBF616A,
+                        timestamp: new Date().toISOString(),
+                        author: {
+                            name: '通話終了'
+                        },
+                        description: `
                         ${state.channel!.name} (<#${state.channelId}>)での通話が終了しました。
 
                         通話時間: **${utils.getTime(Date.now() - (serverState!.channels.get(state.channelId!) as number), true)}**
                         参加人数: **${userCount}人**
                     `.replace(/  +/g, '')
-                }]
-            })
+                    }]
+                })
+            }
         }
 
         // チャンネルのキャッシュを削除
