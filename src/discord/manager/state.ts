@@ -23,6 +23,7 @@ export const userStates = new Map<string, UserState>()
 export const serverStates = new Map<string, ServerState>()
 
 const ANNOUNCE_DELAY = 15000
+const announceQueue = new Set<string>()
 
 export function joinVoiceChannel(state: VoiceState) {
     // botの場合は無視
@@ -47,25 +48,30 @@ export function joinVoiceChannel(state: VoiceState) {
             channels: new Map(),
         })
 
-        // 15秒後に通話開始メッセージを送信
-        setTimeout((targetGuild, voiceState) => {
-            const targetState = serverStates.get(targetGuild.id)
+        if (!announceQueue.has(guild.id)) {
+            announceQueue.add(guild.id)
 
-            // もしそれまでに通話を終了していれば送信せず終わる
-            if (!targetState) return
-            targetGuild.systemChannel?.send({
-                content: '@everyone',
-                embeds: [{
-                    color: 0xA3BE8C,
-                    timestamp: new Date(targetState.globalStartTime).toISOString(),
-                    author: {
-                        name: '通話開始',
-                        icon_url: voiceState.member!.displayAvatarURL()
-                    },
-                    description: `${voiceState.member!.displayName}さんが${voiceState.channel!.name} (<#${voiceState.channelId}>)で通話を開始しました。 `
-                }]
-            })
-        }, ANNOUNCE_DELAY, guild, state)
+            // 15秒後に通話開始メッセージを送信
+            setTimeout((targetGuild, voiceState) => {
+                announceQueue.delete(targetGuild.id)
+                const targetState = serverStates.get(targetGuild.id)
+
+                // もしそれまでに通話を終了していれば送信せず終わる
+                if (!targetState) return
+                targetGuild.systemChannel?.send({
+                    content: '@everyone',
+                    embeds: [{
+                        color: 0xA3BE8C,
+                        timestamp: new Date(targetState.globalStartTime).toISOString(),
+                        author: {
+                            name: '通話開始',
+                            icon_url: voiceState.member!.displayAvatarURL()
+                        },
+                        description: `${voiceState.member!.displayName}さんが${voiceState.channel!.name} (<#${voiceState.channelId}>)で通話を開始しました。 `
+                    }]
+                })
+            }, ANNOUNCE_DELAY, guild, state)
+        }
     }
 
     // channelStateが登録されていなければ登録
