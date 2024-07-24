@@ -92,8 +92,27 @@ export function calcurateStatistics(userHistorys: UserHistoryRecord[], rangeUnit
         // チャート用データ
         if (statistics.chartData) {
             if (record.unix < diffTarget.range) continue
-            const date = moment(record.unix).format(rangeUnit === 'week' ? 'ddd' : rangeUnit === 'month' ? 'Do' : 'MMM')
-            statistics.chartData.data[date] += record.time
+
+            const splittedRecord: {
+                unix: number
+                time: number
+            }[] = []
+
+            // 日をまたいでいる場合は分割
+            if (moment(record.unix).dayOfYear() !== moment(record.unix + record.time).dayOfYear()) {
+                const day1 = moment(record.unix).startOf('day').add(1, 'day').unix() * 1000 - record.unix
+                const day2 = record.time - day1
+
+                splittedRecord.push({ unix: record.unix, time: day1 })
+                splittedRecord.push({ unix: record.unix + day1, time: day2 })
+            } else {
+                splittedRecord.push({ unix: record.unix, time: record.time })
+            }
+
+            splittedRecord.forEach((record) => {
+                const date = moment(record.unix).format(rangeUnit === 'week' ? 'ddd' : rangeUnit === 'month' ? 'Do' : 'MMM')
+                statistics.chartData!.data[date] += record.time
+            })
         }
     }
 
