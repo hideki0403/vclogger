@@ -32,6 +32,9 @@ export const db = sqlite3('database.sqlite3')
 
 export function initialize() {
     db.prepare('CREATE TABLE IF NOT EXISTS history(user TEXT, server TEXT, channel TEXT, unix INTEGER, time INTEGER)').run()
+    db.prepare('CREATE INDEX IF NOT EXISTS history_user ON history(user)').run()
+    db.prepare('CREATE INDEX IF NOT EXISTS history_server ON history(server)').run()
+    db.prepare('CREATE INDEX IF NOT EXISTS history_unix ON history(unix)').run()
 }
 
 export function insertHistory(userId: string, state: UserState) {
