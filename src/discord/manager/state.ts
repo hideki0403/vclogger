@@ -32,10 +32,12 @@ export function joinVoiceChannel(state: VoiceState) {
     // もし既に参加していた場合は無視
     if (userStates.has(state.id)) return
 
+    const currentTime = Date.now()
+
     userStates.set(state.id, {
         serverId: state.guild.id,
         channelId: state.channelId!,
-        joinTime: Date.now(),
+        joinTime: currentTime,
     })
 
     log.info(`UserJoin: ${state.member?.user.username} (${moment().format('YYYY/MM/DD HH:mm:ss')})`)
@@ -44,7 +46,7 @@ export function joinVoiceChannel(state: VoiceState) {
     const guild = state.guild
     if (!serverStates.has(guild.id)) {
         serverStates.set(guild.id, {
-            globalStartTime: Date.now(),
+            globalStartTime: currentTime,
             channels: new Map(),
         })
 
@@ -77,7 +79,7 @@ export function joinVoiceChannel(state: VoiceState) {
     // channelStateが登録されていなければ登録
     const serverState = serverStates.get(guild.id)
     if (!serverState!.channels.has(state.channelId!)) {
-        serverState!.channels.set(state.channelId!, Date.now())
+        serverState!.channels.set(state.channelId!, currentTime)
     }
 
     // statusを更新
@@ -129,9 +131,10 @@ export function leaveVoiceChannel(state: VoiceState) {
             })
 
             const userCount = Array.from(new Set(records.map(x => x.user))).length
+            const currentTime = Date.now()
 
             // 通話開始メッセージが送信されていれば通話終了メッセージを送信
-            if (Date.now() - serverState.globalStartTime > ANNOUNCE_DELAY) {
+            if (currentTime - serverState.globalStartTime > ANNOUNCE_DELAY) {
                 guild.systemChannel?.send({
                     embeds: [{
                         color: 0xBF616A,
@@ -142,7 +145,7 @@ export function leaveVoiceChannel(state: VoiceState) {
                         description: `
                         ${state.channel!.name} (<#${state.channelId}>)での通話が終了しました。
 
-                        通話時間: **${utils.getTime(Date.now() - (serverState!.channels.get(state.channelId!) as number), true)}**
+                        通話時間: **${utils.getTime(currentTime - (serverState!.channels.get(state.channelId!) as number), true)}**
                         参加人数: **${userCount}人**
                     `.replace(/  +/g, '')
                     }]
