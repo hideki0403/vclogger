@@ -12,21 +12,21 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.6",
-    "@types/node": "^20.8.10",
-    "ts-node": "^10.9.1",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^20.14.12",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "tsc-alias": "^1.8.8",
+    "tsc-alias": "^1.8.10",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.2.2"
+    "typescript": "^5.5.4"
   },
   "dependencies": {
-    "better-sqlite3": "^9.0.0",
-    "chart.js": "3.9.1",
+    "better-sqlite3": "^11.1.2",
+    "chart.js": "4.4.3",
     "chartjs-node-canvas": "^4.1.6",
-    "discord.js": "^14.13.0",
-    "dotenv": "^16.3.1",
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5",
     "log4js": "^6.9.1",
-    "moment": "^2.29.4"
+    "moment": "^2.30.1"
   }
 }

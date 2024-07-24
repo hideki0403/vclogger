@@ -1,11 +1,10 @@
 // VC logger
-import dotenv from 'dotenv'
+import 'dotenv/config'
 import logger from '@/logger'
 import * as database from '@/database'
 import * as discord from '@/discord'
 import * as stateManager from '@/discord/manager/state'
 
-dotenv.config()
 database.initialize()
 discord.initialize()
 
