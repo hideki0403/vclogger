@@ -56,7 +56,7 @@ export default new BaseCommand({
         }
 
         // グラフを生成
-        const attachment = new AttachmentBuilder(await utils.renderChart(statistics.chartData!), {
+        const attachment = new AttachmentBuilder(utils.renderChart(statistics.chartData!), {
             name: 'chart.png'
         })
 

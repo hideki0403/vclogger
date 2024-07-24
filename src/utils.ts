@@ -1,9 +1,9 @@
-import moment from 'moment'
 import 'moment/locale/ja'
-import { ChartJSNodeCanvas } from 'chartjs-node-canvas'
-import type { ChartConfiguration } from 'chart.js'
-import { UserHistoryRecord } from '@/database'
 import path from 'path'
+import moment from 'moment'
+import Chart from 'chart.js/auto'
+import { createCanvas, GlobalFonts } from '@napi-rs/canvas'
+import { UserHistoryRecord } from '@/database'
 
 export type RangeUnit = 'week' | 'month' | 'year'
 export type TimeUnit = 'seconds' | 'minutes' | 'hours'
@@ -193,21 +193,29 @@ export function getRangeDate(rangeUnit: RangeUnit | undefined, rawUnit = false) 
     return moment().startOf('day').subtract(unit, 'days').unix() * 1000
 }
 
-export async function renderChart(chartData: NonNullable<Statistics['chartData']>) {
-    const canvasRenderService = new ChartJSNodeCanvas({
-        width: 1280,
-        height: 720,
-        backgroundColour: '#2E3440',
-        chartCallback: (ChartJS) => {
-            ChartJS.defaults.font.family = 'M PLUS 2'
-            ChartJS.defaults.font.size = 16
-            ChartJS.defaults.color = '#ECEFF4'
+export function renderChart(chartData: NonNullable<Statistics['chartData']>) {
+    const canvas = createCanvas(1280, 720)
+    const ctx = canvas.getContext('2d') as unknown as CanvasRenderingContext2D
+
+    GlobalFonts.registerFromPath(path.join(__dirname, '../fonts/Mplus2-Medium.otf'), 'M PLUS 2')
+
+    Chart.defaults.font.family = 'M PLUS 2'
+    Chart.defaults.font.size = 16
+    Chart.defaults.color = '#ECEFF4'
+
+    Chart.register({
+        id: 'bg',
+        beforeDraw: (chart) => {
+            const ctx = chart.ctx
+            ctx.save()
+            ctx.globalCompositeOperation = 'destination-over'
+            ctx.fillStyle = '#2E3440'
+            ctx.fillRect(0, 0, chart.width, chart.height)
+            ctx.restore()
         }
     })
 
-    canvasRenderService.registerFont(path.join(__dirname, '../fonts/Mplus2-Medium.otf'), { family: 'M PLUS 2' })
-
-    const configuration: ChartConfiguration<'bar'> = {
+    const chart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: Object.keys(chartData.data),
@@ -220,6 +228,7 @@ export async function renderChart(chartData: NonNullable<Statistics['chartData']
             }]
         },
         options: {
+            animation: false,
             plugins: {
                 title: {
                     display: true,
@@ -261,7 +270,8 @@ export async function renderChart(chartData: NonNullable<Statistics['chartData']
                 padding: 20
             }
         }
-    }
+    })
 
-    return await canvasRenderService.renderToBuffer(configuration)
+    chart.render()
+    return canvas.toBuffer('image/png')
 }
