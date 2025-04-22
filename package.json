@@ -12,20 +12,20 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.11",
-    "@types/node": "^20.14.12",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.14.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "tsc-alias": "^1.8.10",
+    "tsc-alias": "^1.8.15",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@napi-rs/canvas": "^0.1.53",
-    "better-sqlite3": "^11.1.2",
-    "chart.js": "4.4.3",
-    "discord.js": "^14.15.3",
-    "dotenv": "^16.4.5",
+    "@napi-rs/canvas": "^0.1.69",
+    "better-sqlite3": "^11.9.1",
+    "chart.js": "4.4.9",
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.5.0",
     "log4js": "^6.9.1",
     "moment": "^2.30.1"
   }
