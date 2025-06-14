@@ -5,7 +5,6 @@ import * as statusManager from '@/discord/manager/status'
 import * as database from '@/database'
 import * as utils from '@/utils'
 
-
 const log = logger('StateManager')
 
 export type UserState = {
@@ -57,9 +56,11 @@ export function joinVoiceChannel(state: VoiceState) {
             setTimeout((targetGuild, voiceState) => {
                 announceQueue.delete(targetGuild.id)
                 const targetState = serverStates.get(targetGuild.id)
+                const channelSettings = database.getChannelSettings(voiceState.channelId!)
 
-                // もしそれまでに通話を終了していれば送信せず終わる
-                if (!targetState) return
+                // もしそれまでに通話を終了している or チャンネル設定で通知を送信しない設定にしている場合は送信せず終わる
+                if (!targetState || channelSettings?.mute) return
+
                 targetGuild.systemChannel?.send({
                     content: '@everyone',
                     embeds: [{
@@ -132,9 +133,11 @@ export function leaveVoiceChannel(state: VoiceState) {
 
             const userCount = Array.from(new Set(records.map(x => x.user))).length
             const currentTime = Date.now()
+            const channelSettings = database.getChannelSettings(state.channelId!)
 
+            // チャンネル設定で通知を送信しない設定にされておらず
             // 通話開始メッセージが送信されていれば通話終了メッセージを送信
-            if (currentTime - serverState.globalStartTime > ANNOUNCE_DELAY) {
+            if (currentTime - serverState.globalStartTime > ANNOUNCE_DELAY && !channelSettings?.mute) {
                 guild.systemChannel?.send({
                     embeds: [{
                         color: 0xBF616A,

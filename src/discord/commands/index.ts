@@ -5,6 +5,7 @@ import chart from './chart'
 import ranking from './ranking'
 import deploy from './deploy'
 import resync from './resync'
+import mute from './mute'
 
 export default [
     show,
@@ -14,4 +15,5 @@ export default [
     ranking,
     deploy,
     resync,
+    mute,
 ]

@@ -9,6 +9,11 @@ export type UserHistoryRecord = {
     time: number,
 }
 
+export type ChannelSettingsRecord = {
+    channel: string,
+    mute: boolean,
+}
+
 export type SearchOptions = {
     user?: string,
     server?: string,
@@ -31,10 +36,15 @@ const overrideConditions = {
 export const db = sqlite3('database.sqlite3')
 
 export function initialize() {
+    // 通話履歴のテーブルを作成
     db.prepare('CREATE TABLE IF NOT EXISTS history(user TEXT, server TEXT, channel TEXT, unix INTEGER, time INTEGER)').run()
     db.prepare('CREATE INDEX IF NOT EXISTS history_user ON history(user)').run()
     db.prepare('CREATE INDEX IF NOT EXISTS history_server ON history(server)').run()
     db.prepare('CREATE INDEX IF NOT EXISTS history_unix ON history(unix)').run()
+
+    // チャンネル設定のテーブルを作成
+    db.prepare('CREATE TABLE IF NOT EXISTS channel_settings(channel TEXT, mute INTEGER)').run()
+    db.prepare('CREATE INDEX IF NOT EXISTS idx_channel_settings ON channel_settings(channel)').run()
 }
 
 export function insertHistory(userId: string, state: UserState) {
@@ -65,4 +75,23 @@ export function getHistory(options?: SearchOptions) {
     if (query.length) sql += ` WHERE ${query.join(' AND ')}`
 
     return db.prepare(sql).all(...params) as UserHistoryRecord[]
+}
+
+export function getChannelSettings(channelId: string): ChannelSettingsRecord | null {
+    const result = db.prepare('SELECT * FROM channel_settings WHERE channel = ?').get(channelId) as Record<string, any> | undefined
+    if (result == null) return null
+
+    return {
+        channel: result.channel,
+        mute: Boolean(result.mute),
+    }
+}
+
+export function setChannelSettings(channelId: string, mute: boolean) {
+    const existing = getChannelSettings(channelId)
+    if (existing) {
+        db.prepare('UPDATE channel_settings SET mute = ? WHERE channel = ?').run(Number(mute), channelId)
+    } else {
+        db.prepare('INSERT INTO channel_settings VALUES (?, ?)').run(channelId, Number(mute))
+    }
 }
